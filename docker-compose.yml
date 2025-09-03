@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: kartu-iuran-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: kartu_iuran_digital
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - kartu-iuran-network
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d kartu_iuran_digital" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Optional: pgAdmin for database management
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: kartu-iuran-pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@kartu-iuran.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "8081:80"
+    depends_on:
+      - postgres
+    networks:
+      - kartu-iuran-network
+
+volumes:
+  postgres_data:
+
+
+networks:
+  kartu-iuran-network:
+    driver: bridge

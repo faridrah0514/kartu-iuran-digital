@@ -1,0 +1,39 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Siswa {
+  id            String       @id @default(uuid())
+  nama          String
+  kelas         KelasEnum
+  jenis_kelamin JenisKelamin
+
+  @@unique([nama, kelas], name: "nama_kelas")
+  @@map("siswa")
+}
+
+enum KelasEnum {
+  A1
+  A2
+  A3
+  B1
+  B2
+  B3
+  B4
+}
+
+enum JenisKelamin {
+  LAKI_LAKI @map("Laki-laki")
+  PEREMPUAN @map("Perempuan")
+}
