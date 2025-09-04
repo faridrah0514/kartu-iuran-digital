@@ -18,9 +18,36 @@ model Siswa {
   nama          String
   kelas         KelasEnum
   jenis_kelamin JenisKelamin
+  pembayaran    Pembayaran[]
 
   @@unique([nama, kelas], name: "nama_kelas")
   @@map("siswa")
+}
+
+model Pembayaran {
+  id              String           @id @default(uuid())
+  siswaId         String           @map("siswa_id")
+  startMonth      DateTime         @map("start_month")
+  endMonth        DateTime         @map("end_month")
+  amount          Decimal          @db.Decimal(10, 2)
+  filePath        String           @map("file_path")
+  fileName        String           @map("file_name")
+  fileSize        Int              @map("file_size")
+  fileMimeType    String           @map("file_mime_type")
+  status          PembayaranStatus @default(PENDING)
+  createdAt       DateTime         @default(now()) @map("created_at")
+  updatedAt       DateTime         @updatedAt @map("updated_at")
+  approvedAt      DateTime?        @map("approved_at")
+  approvedBy      String?          @map("approved_by")
+  rejectionReason String?          @map("rejection_reason")
+
+  // Relations
+  siswa Siswa @relation(fields: [siswaId], references: [id], onDelete: Cascade)
+
+  @@index([siswaId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("pembayaran")
 }
 
 enum KelasEnum {
@@ -36,4 +63,10 @@ enum KelasEnum {
 enum JenisKelamin {
   LAKI_LAKI @map("Laki-laki")
   PEREMPUAN @map("Perempuan")
+}
+
+enum PembayaranStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }

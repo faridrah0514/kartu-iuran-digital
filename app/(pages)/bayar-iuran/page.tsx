@@ -18,6 +18,7 @@ import {
     Modal,
     Spin,
     DatePicker,
+    Image,
 } from 'antd';
 import {
     UserOutlined,
@@ -27,15 +28,29 @@ import {
     CheckCircleOutlined,
     TeamOutlined,
     FileImageOutlined,
+    ArrowLeftOutlined,
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import 'dayjs/locale/id';
 import { ConfigProvider } from 'antd';
 import locale from 'antd/locale/id_ID';
-import type { UploadFile, UploadProps } from 'antd';
+import type { GetProp, UploadFile, UploadProps } from 'antd';
+import Link from 'next/link';
+import NextImage from 'next/image';
+import { useRouter } from 'next/navigation';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
+
+type FileType = Parameters<GetProp<UploadProps, 'beforeUpload'>>[0];
+
+const getBase64 = (file: FileType): Promise<string> =>
+    new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = (error) => reject(error);
+    });
 
 // API function to fetch students
 const fetchStudents = async (kelas?: string) => {
@@ -76,14 +91,18 @@ interface PaymentFormData {
 }
 
 export default function BayarIuranPage() {
+    const router = useRouter();
     const [form] = Form.useForm();
     const [loading, setLoading] = useState(false);
     const [selectedClass, setSelectedClass] = useState<string>('');
+    const [selectedStudent, setSelectedStudent] = useState<string>('');
     const [filteredStudents, setFilteredStudents] = useState<Student[]>([]);
     const [selectedMonths, setSelectedMonths] = useState<string[]>([]);
     const [fileList, setFileList] = useState<UploadFile[]>([]);
     const [studentsLoading, setStudentsLoading] = useState(false);
     const [studentsError, setStudentsError] = useState<string>('');
+    const [previewOpen, setPreviewOpen] = useState(false);
+    const [previewImage, setPreviewImage] = useState('');
 
     // Fetch students from API based on selected class
     useEffect(() => {
@@ -116,7 +135,13 @@ export default function BayarIuranPage() {
 
     const handleClassChange = (value: string) => {
         setSelectedClass(value);
+        setSelectedStudent('');
         form.setFieldsValue({ siswa: undefined });
+    };
+
+    const handleStudentChange = (value: string) => {
+        setSelectedStudent(value);
+        form.setFieldsValue({ siswa: value });
     };
 
     const handleMonthChange = (dates: any, dateStrings: string[]) => {
@@ -137,6 +162,15 @@ export default function BayarIuranPage() {
             setSelectedMonths([]);
             form.setFieldsValue({ amount: 0 });
         }
+    };
+
+    const handlePreview = async (file: UploadFile) => {
+        if (!file.url && !file.preview) {
+            file.preview = await getBase64(file.originFileObj as FileType);
+        }
+
+        setPreviewImage(file.url || (file.preview as string));
+        setPreviewOpen(true);
     };
 
     const uploadProps: UploadProps = {
@@ -164,7 +198,9 @@ export default function BayarIuranPage() {
         showUploadList: {
             showPreviewIcon: true,
             showRemoveIcon: true,
+            showDownloadIcon: false,
         },
+        onPreview: handlePreview,
     };
 
     const onFinish = async (values: PaymentFormData) => {
@@ -181,20 +217,33 @@ export default function BayarIuranPage() {
         setLoading(true);
 
         try {
-            // Simulate API call
-            await new Promise(resolve => setTimeout(resolve, 2000));
+            // Prepare form data
+            const formData = new FormData();
+            formData.append('siswaId', values.siswa);
+            formData.append('startMonth', selectedMonths[0]);
+            formData.append('endMonth', selectedMonths[selectedMonths.length - 1]);
+            formData.append('file', fileList[0].originFileObj as File);
 
-            message.success('Pembayaran berhasil disubmit!');
+            // Submit to API
+            const response = await fetch('/api/payments', {
+                method: 'POST',
+                body: formData,
+            });
 
-            // Reset form
-            form.resetFields();
-            setSelectedClass('');
-            setFilteredStudents([]);
-            setSelectedMonths([]);
-            setFileList([]);
+            const result = await response.json();
+
+            if (!result.success) {
+                throw new Error(result.error || 'Gagal mengirim pembayaran');
+            }
+
+            message.success('Pembayaran berhasil disubmit! Status: PENDING');
+
+            // Redirect to status page
+            router.push(`/bayar-iuran/${result.data.id}/status`);
 
         } catch (error) {
-            message.error('Terjadi kesalahan saat submit pembayaran!');
+            console.error('Payment submission error:', error);
+            message.error(error instanceof Error ? error.message : 'Terjadi kesalahan saat submit pembayaran!');
         } finally {
             setLoading(false);
         }
@@ -202,8 +251,8 @@ export default function BayarIuranPage() {
 
     return (
         <ConfigProvider locale={locale}>
-            <div className="min-h-screen bg-gray-50 p-4">
-                <div className="max-w-md mx-auto">
+            <div className="min-h-screen bg-gradient-to-br from-[#001F54] via-[#001F54] to-[#6B8E23] flex flex-col items-center justify-center p-4">
+                <div className="max-w-md w-full mx-4">
                     <style jsx global>{`
                     .ant-picker-dropdown {
                         z-index: 9999 !important;
@@ -225,7 +274,35 @@ export default function BayarIuranPage() {
                         width: 25% !important;
                         min-width: 60px !important;
                     }
-                    @media (max-width: 480px) {
+                    /* Desktop styles - allow normal positioning */
+                    @media (min-width: 769px) {
+                        .ant-picker-dropdown {
+                            position: absolute !important;
+                            left: auto !important;
+                            transform: none !important;
+                            width: auto !important;
+                            max-width: none !important;
+                        }
+                        .ant-picker-panel-container {
+                            width: auto !important;
+                            max-width: none !important;
+                        }
+                        .ant-picker-panel {
+                            width: auto !important;
+                        }
+                        .ant-picker-month-panel {
+                            width: auto !important;
+                        }
+                        .ant-picker-month-panel .ant-picker-content {
+                            width: auto !important;
+                        }
+                        .ant-picker-month-panel .ant-picker-cell {
+                            width: auto !important;
+                            min-width: 60px !important;
+                        }
+                    }
+                    /* Mobile styles - keep existing mobile behavior */
+                    @media (max-width: 768px) {
                         .ant-picker-dropdown {
                             left: 50% !important;
                             transform: translateX(-50%) !important;
@@ -239,13 +316,25 @@ export default function BayarIuranPage() {
                         }
                     }
                 `}</style>
-                    <Card className="shadow-lg">
+                    <Card className="shadow-2xl rounded-2xl bg-white" style={{ borderRadius: '16px' }}>
                         <div className="text-center mb-6">
-                            <Title level={3} className="!mb-2">
-                                <DollarOutlined className="mr-2 text-green-600" />
+                            {/* Logo */}
+                            <div className="mb-6">
+                                <NextImage
+                                    src="/logo/abu-dzar-logo.png"
+                                    alt="Abu Dzar Logo"
+                                    width={120}
+                                    height={120}
+                                    priority
+                                    className="mx-auto"
+                                />
+                            </div>
+
+                            <Title level={3} className="!mb-2 text-[#001F54]">
+                                <DollarOutlined className="mr-2 text-[#6B8E23]" />
                                 Bayar Iuran
                             </Title>
-                            <Text type="secondary">
+                            <Text type="secondary" className="text-gray-600">
                                 Formulir pembayaran iuran sekolah
                             </Text>
                         </div>
@@ -260,7 +349,7 @@ export default function BayarIuranPage() {
                             <Form.Item
                                 label={
                                     <Space>
-                                        <TeamOutlined className="text-blue-600" />
+                                        <TeamOutlined className="text-[#6B8E23]" />
                                         <span>Pilih Kelas</span>
                                     </Space>
                                 }
@@ -287,7 +376,7 @@ export default function BayarIuranPage() {
                             <Form.Item
                                 label={
                                     <Space>
-                                        <UserOutlined className="text-blue-600" />
+                                        <UserOutlined className="text-[#6B8E23]" />
                                         <span>Pilih Siswa</span>
                                     </Space>
                                 }
@@ -307,6 +396,8 @@ export default function BayarIuranPage() {
                                     size="large"
                                     loading={studentsLoading}
                                     disabled={!selectedClass || studentsLoading || !!studentsError}
+                                    value={selectedStudent || undefined}
+                                    onChange={handleStudentChange}
                                 >
                                     {filteredStudents.map((student) => (
                                         <Option key={student.id} value={student.id}>
@@ -330,7 +421,7 @@ export default function BayarIuranPage() {
                             <Form.Item
                                 label={
                                     <Space>
-                                        <CalendarOutlined className="text-blue-600" />
+                                        <CalendarOutlined className="text-[#6B8E23]" />
                                         <span>Periode Pembayaran</span>
                                     </Space>
                                 }
@@ -350,26 +441,19 @@ export default function BayarIuranPage() {
                                     }}
                                     format="MMMM YYYY"
                                     style={{ width: '100%' }}
-                                    popupStyle={{
-                                        width: '100%',
-                                        maxWidth: '90vw',
-                                        left: '50% !important',
-                                        transform: 'translateX(-50%)',
-                                        position: 'fixed'
-                                    }}
                                     getPopupContainer={(trigger) => trigger.parentElement || document.body}
                                 />
                             </Form.Item>
 
                             {/* Amount Display */}
                             {selectedMonths.length > 0 && (
-                                <Card size="small" className="bg-green-50 border-green-200">
+                                <Card size="small" className="bg-[#6B8E23]/10 border-[#6B8E23]/20 rounded-2xl">
                                     <Row justify="space-between" align="middle">
                                         <Col>
-                                            <Text strong>Total Pembayaran:</Text>
+                                            <Text strong className="text-[#001F54]">Total Pembayaran:</Text>
                                         </Col>
                                         <Col>
-                                            <Text strong className="text-lg text-green-600">
+                                            <Text strong className="text-lg text-[#6B8E23]">
                                                 Rp {totalAmount.toLocaleString('id-ID')}
                                             </Text>
                                         </Col>
@@ -384,7 +468,7 @@ export default function BayarIuranPage() {
                                     <Row justify="space-between" className="mt-1">
                                         <Col>
                                             <Text type="secondary" className="text-xs">
-                                                Periode: {selectedMonths[0]} - {selectedMonths[selectedMonths.length - 1]}
+                                                Periode: {dayjs(selectedMonths[0]).format('MMMM YYYY')} - {dayjs(selectedMonths[selectedMonths.length - 1]).format('MMMM YYYY')}
                                             </Text>
                                         </Col>
                                     </Row>
@@ -395,32 +479,38 @@ export default function BayarIuranPage() {
                             <Form.Item
                                 label={
                                     <Space>
-                                        <FileImageOutlined className="text-blue-600" />
+                                        <FileImageOutlined className="text-[#6B8E23]" />
                                         <span>Upload Bukti Transfer</span>
                                     </Space>
                                 }
                                 name="receipt"
                                 rules={[{ required: true, message: 'Upload bukti transfer!' }]}
+                                extra={
+                                    <div className="text-xs text-gray-500 mt-1">
+                                        Max 5MB, format: JPG, PNG
+                                    </div>
+                                }
                             >
                                 <Upload {...uploadProps}>
                                     {fileList.length >= 1 ? null : (
-                                        <div className="text-center">
-                                            <UploadOutlined className="text-2xl text-gray-400 mb-2" />
-                                            <div className="text-sm text-gray-500">
-                                                Klik untuk upload gambar
-                                            </div>
-                                            <div className="text-xs text-gray-400">
-                                                Max 5MB, format: JPG, PNG
+                                        <div className="text-center p-2">
+                                            <UploadOutlined className="text-xl text-[#6B8E23] mb-2" />
+                                            <div className="text-xs text-[#001F54]">
+                                                Upload
                                             </div>
                                         </div>
                                     )}
                                 </Upload>
                             </Form.Item>
-
+                            <div className="text-center">
+                                <Text type="secondary" className="text-sm text-[#001F54]">
+                                    💡 <strong>Tips:</strong> Pastikan bukti transfer jelas dan dapat dibaca
+                                </Text>
+                            </div>
                             <Divider />
 
                             {/* Submit Button */}
-                            <Form.Item className="mb-0">
+                            <Form.Item className="mb-4">
                                 <Button
                                     type="primary"
                                     htmlType="submit"
@@ -428,24 +518,65 @@ export default function BayarIuranPage() {
                                     block
                                     loading={loading}
                                     icon={<CheckCircleOutlined />}
-                                    className="h-12 text-base font-medium"
+                                    className="h-12 text-base font-medium rounded-full"
+                                    style={{
+                                        backgroundColor: '#6B8E23',
+                                        borderColor: '#6B8E23',
+                                        boxShadow: '0 4px 12px rgba(107, 142, 35, 0.3)'
+                                    }}
+                                    onMouseEnter={(e) => {
+                                        e.currentTarget.style.backgroundColor = '#5a7a1f';
+                                        e.currentTarget.style.borderColor = '#5a7a1f';
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        e.currentTarget.style.backgroundColor = '#6B8E23';
+                                        e.currentTarget.style.borderColor = '#6B8E23';
+                                    }}
                                 >
                                     {loading ? 'Mengirim...' : 'Submit Pembayaran'}
                                 </Button>
+                            </Form.Item>
+
+                            {/* Back Button */}
+                            <Form.Item className="mb-0">
+                                <Link href="/">
+                                    <Button
+                                        type="default"
+                                        size="large"
+                                        block
+                                        icon={<ArrowLeftOutlined />}
+                                        className="h-12 text-base font-medium rounded-full border-[#6B8E23] text-[#6B8E23] hover:bg-[#6B8E23] hover:text-white"
+                                    >
+                                        Kembali
+                                    </Button>
+                                </Link>
                             </Form.Item>
                         </Form>
                     </Card>
 
                     {/* Info Card */}
-                    <Card size="small" className="mt-4 bg-blue-50 border-blue-200">
+                    {/* <Card size="small" className="mt-4 bg-white/90 border-[#6B8E23]/20 rounded-2xl shadow-lg">
                         <div className="text-center">
-                            <Text type="secondary" className="text-sm">
+                            <Text type="secondary" className="text-sm text-[#001F54]">
                                 💡 <strong>Tips:</strong> Pastikan bukti transfer jelas dan dapat dibaca
                             </Text>
                         </div>
-                    </Card>
+                    </Card> */}
                 </div>
             </div>
+
+            {/* Image Preview Modal */}
+            {previewImage && (
+                <Image
+                    wrapperStyle={{ display: 'none' }}
+                    preview={{
+                        visible: previewOpen,
+                        onVisibleChange: (visible) => setPreviewOpen(visible),
+                        afterOpenChange: (visible) => !visible && setPreviewImage(''),
+                    }}
+                    src={previewImage}
+                />
+            )}
         </ConfigProvider>
     );
 }
