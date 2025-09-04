@@ -519,7 +519,7 @@ export default function PaymentHistoryPage() {
                                         <div className="text-sm font-medium text-[#001F54] mb-2">Bukti Transfer</div>
                                         <div className="border border-gray-200 rounded-lg overflow-hidden">
                                             <Image
-                                                src={`/${selectedPayment.filePath}`}
+                                                src={selectedPayment.filePath}
                                                 alt="Bukti Transfer"
                                                 className="w-full"
                                                 style={{ maxHeight: '300px', objectFit: 'contain' }}

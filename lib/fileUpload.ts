@@ -70,7 +70,7 @@ export async function savePaymentFile(
     await writeFile(filePath, buffer);
 
     // Return relative path from public directory
-    const relativePath = `uploads/pembayaran/${year}/${kelas}/${siswaId}/${startMonth}_${endMonth}/${fileName}`;
+    const relativePath = `/uploads/pembayaran/${year}/${kelas}/${siswaId}/${startMonth}_${endMonth}/${fileName}`;
 
     return {
         filePath: relativePath,
