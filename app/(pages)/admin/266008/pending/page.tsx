@@ -199,6 +199,12 @@ export default function PendingTransactionsPage() {
                                                             {dayjs(payment.startMonth).format('MMM YYYY')} - {dayjs(payment.endMonth).format('MMM YYYY')}
                                                         </span>
                                                     </div>
+                                                    <div className="flex items-center space-x-1 text-xs text-gray-600">
+                                                        <CalendarOutlined className="text-[#6B8E23]" />
+                                                        <span>
+                                                            {payment.startMonth} - {payment.endMonth}
+                                                        </span>
+                                                    </div>
                                                 </div>
                                             </div>
                                             <div className="text-right">
