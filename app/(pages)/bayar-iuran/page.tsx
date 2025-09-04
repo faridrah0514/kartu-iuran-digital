@@ -673,6 +673,7 @@ export default function BayarIuranPage() {
                         afterOpenChange: (visible) => !visible && setPreviewImage(''),
                     }}
                     src={previewImage}
+                    alt="Bukti Transfer"
                 />
             )}
         </ConfigProvider>
