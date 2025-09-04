@@ -5,25 +5,21 @@ import {
     Card,
     Button,
     Typography,
-    Avatar,
     message,
     Modal,
     Form,
     Input,
     Image,
-    Row,
-    Col,
-    Tag,
 } from 'antd';
 import {
     TeamOutlined,
     ArrowLeftOutlined,
     UserOutlined,
     CalendarOutlined,
-    DollarOutlined,
     CheckOutlined,
     CloseOutlined,
     FileImageOutlined,
+    EyeOutlined,
 } from '@ant-design/icons';
 import { ConfigProvider } from 'antd';
 import locale from 'antd/locale/id_ID';
@@ -78,7 +74,8 @@ export default function PendingTransactionsPage() {
                 message.error('Gagal memuat data pembayaran');
             }
         } catch (error) {
-            message.error('Terjadi kesalahan saat memuat data');
+            const errorMsg = error instanceof Error ? error.message : String(error);
+            message.error(`Terjadi kesalahan saat memuat data: ${errorMsg}`);
         } finally {
             setLoading(false);
         }
@@ -109,8 +106,9 @@ export default function PendingTransactionsPage() {
             } else {
                 message.error(result.error || 'Gagal memperbarui status');
             }
-        } catch (error) {
-            message.error('Terjadi kesalahan saat memperbarui status');
+        } catch (error: any) {
+            const errorMsg = error instanceof Error ? error.message : String(error);
+            message.error(`Terjadi kesalahan saat memperbarui status: ${errorMsg}`);
         }
     };
 
@@ -205,12 +203,18 @@ export default function PendingTransactionsPage() {
                                             </div>
                                             <div className="text-right">
                                                 <div className="font-bold text-green-600 text-sm">
-                                                    Rp {payment.amount.toLocaleString('id-ID')}
+                                                    {new Intl.NumberFormat('id-ID', {
+                                                        style: 'currency',
+                                                        currency: 'IDR',
+                                                        minimumFractionDigits: 0,
+                                                        maximumFractionDigits: 0
+                                                    }).format(payment.amount)}
                                                 </div>
                                                 <div className="mt-2">
                                                     <Button
                                                         type="primary"
                                                         size="small"
+                                                        icon={<EyeOutlined />}
                                                         className="bg-blue-600 border-blue-600 hover:bg-blue-700 text-xs"
                                                         onClick={(e) => {
                                                             e.stopPropagation();
@@ -246,94 +250,117 @@ export default function PendingTransactionsPage() {
                     {/* Preview Modal */}
                     <Modal
                         title={
-                            <div className="flex items-center space-x-2">
-                                <FileImageOutlined className="text-[#6B8E23]" />
-                                <span>Detail Pembayaran</span>
+                            <div className="flex items-center space-x-3 pb-3 border-b border-gray-200">
+                                <FileImageOutlined className="text-[#6B8E23] text-lg" />
+                                <span className="text-lg font-semibold text-[#001F54]">Detail Pembayaran</span>
                             </div>
                         }
                         open={previewVisible}
                         onCancel={() => setPreviewVisible(false)}
-                        width={800}
+                        width={700}
                         footer={null}
-                        className="rounded-2xl"
+                        className="rounded-xl"
+                        styles={{
+                            header: {
+                                borderBottom: 'none',
+                                paddingBottom: '0',
+                                marginBottom: '10px',
+                                paddingLeft: '0px',
+                                paddingRight: '0px'
+                            },
+                            body: {
+                                padding: '0',
+                                paddingLeft: '0',
+                                paddingRight: '0'
+                            }
+                        }}
                     >
                         {selectedPayment && (
-                            <div>
-                                {/* Siswa */}
-                                <div className="mb-4">
-                                    <Text strong className="text-[#001F54]">Siswa:</Text>
-                                    <div className="flex items-center space-x-2 mt-1">
-                                        <UserOutlined className="text-[#6B8E23]" />
+                            <div className="bg-white">
+                                {/* Student Info */}
+                                <div className="py-3 border-b border-gray-100">
+                                    <div className="flex items-center space-x-3">
+                                        <div className="w-10 h-10 bg-[#6B8E23] rounded-full flex items-center justify-center">
+                                            <UserOutlined className="text-white" />
+                                        </div>
                                         <div>
-                                            <div className="font-medium">{selectedPayment.siswa?.nama || 'N/A'} - {selectedPayment.siswa?.kelas || 'N/A'}</div>
-                                            {/* <div className="text-sm text-gray-500">{selectedPayment.siswa?.kelas || 'N/A'}</div> */}
+                                            <div className="text-base font-semibold text-[#001F54]">
+                                                {selectedPayment.siswa?.nama || 'N/A'}
+                                            </div>
+                                            <div className="text-sm text-gray-500">
+                                                Kelas {selectedPayment.siswa?.kelas || 'N/A'}
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
 
-                                {/* Status */}
-                                <div className="mb-4">
-                                    <Text strong className="text-[#001F54]">Status:</Text>
-                                    <div className="mt-1">
-                                        <Tag color="orange">Menunggu Persetujuan</Tag>
-                                    </div>
-                                </div>
-
-                                {/* Periode */}
-                                <div className="mb-4">
-                                    <Text strong className="text-[#001F54]">Periode:</Text>
-                                    <div className="flex items-center space-x-2 mt-1">
-                                        <CalendarOutlined className="text-[#6B8E23]" />
-                                        <div>
-                                            {dayjs(selectedPayment.startMonth).format('MMMM YYYY')} - {dayjs(selectedPayment.endMonth).format('MMMM YYYY')}
+                                {/* Payment Details */}
+                                <div className="py-3 space-y-3">
+                                    {/* Status and Period */}
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div className="text-center p-2 bg-orange-50 rounded-lg">
+                                            <div className="text-xs text-gray-500 mb-1">Status</div>
+                                            <div className="text-xs text-orange-600 font-medium">
+                                                Menunggu Persetujuan
+                                            </div>
+                                        </div>
+                                        <div className="text-center p-2 bg-blue-50 rounded-lg">
+                                            <div className="text-xs text-gray-500 mb-1">Periode</div>
+                                            <div className="text-xs font-medium text-[#001F54]">
+                                                {dayjs(selectedPayment.startMonth).format('MMM YYYY')} - {dayjs(selectedPayment.endMonth).format('MMM YYYY')}
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
 
-                                {/* Jumlah */}
-                                <div className="mb-4">
-                                    <Text strong className="text-[#001F54]">Jumlah:</Text>
-                                    <div className="flex items-center space-x-2 mt-1">
-                                        {/* <DollarOutlined className="text-[#6B8E23]" /> */}
-                                        <span className="text-lg font-semibold text-green-600">
-                                            Rp {selectedPayment.amount.toLocaleString('id-ID')}
-                                        </span>
+                                    {/* Amount */}
+                                    <div className="text-center p-3 bg-green-50 rounded-lg">
+                                        <div className="text-sm text-gray-600 mb-1">Jumlah Pembayaran</div>
+                                        <div className="text-xl font-bold text-green-600">
+                                            {new Intl.NumberFormat('id-ID', {
+                                                style: 'currency',
+                                                currency: 'IDR',
+                                                minimumFractionDigits: 0,
+                                                maximumFractionDigits: 0
+                                            }).format(selectedPayment.amount)}
+                                        </div>
                                     </div>
-                                </div>
 
-                                {/* Bukti Transfer */}
-                                <div className="mb-4">
-                                    <Text strong className="text-[#001F54]">Bukti Transfer:</Text>
-                                    <div className="mt-2">
-                                        <Image
-                                            src={`/${selectedPayment.filePath}`}
-                                            alt="Bukti Transfer"
-                                            className="rounded-lg border"
-                                            style={{ maxHeight: '400px' }}
-                                        />
+                                    {/* Bukti Transfer */}
+                                    <div>
+                                        <div className="text-sm font-medium text-[#001F54] mb-2">Bukti Transfer</div>
+                                        <div className="border border-gray-200 rounded-lg overflow-hidden">
+                                            <Image
+                                                src={`/${selectedPayment.filePath}`}
+                                                alt="Bukti Transfer"
+                                                className="w-full"
+                                                style={{ maxHeight: '250px', objectFit: 'contain' }}
+                                            />
+                                        </div>
                                     </div>
                                 </div>
 
                                 {/* Action Buttons */}
-                                <div className="flex justify-end space-x-2">
-                                    <Button
-                                        type="primary"
-                                        icon={<CheckOutlined />}
-                                        onClick={() => updatePaymentStatus(selectedPayment.id, 'APPROVED')}
-                                        className="bg-green-600 border-green-600 hover:bg-green-700"
-                                    >
-                                        Setujui
-                                    </Button>
-                                    <Button
-                                        danger
-                                        icon={<CloseOutlined />}
-                                        onClick={() => {
-                                            setPreviewVisible(false);
-                                            handleReject(selectedPayment);
-                                        }}
-                                    >
-                                        Tolak
-                                    </Button>
+                                <div className="py-3 border-t border-gray-100rounded-b-xl">
+                                    <div className="flex justify-end space-x-2">
+                                        <Button
+                                            type="primary"
+                                            icon={<CheckOutlined />}
+                                            onClick={() => updatePaymentStatus(selectedPayment.id, 'APPROVED')}
+                                            className="bg-green-600 border-green-600 hover:bg-green-700"
+                                        >
+                                            Setujui
+                                        </Button>
+                                        <Button
+                                            danger
+                                            icon={<CloseOutlined />}
+                                            onClick={() => {
+                                                setPreviewVisible(false);
+                                                handleReject(selectedPayment);
+                                            }}
+                                        >
+                                            Tolak
+                                        </Button>
+                                    </div>
                                 </div>
                             </div>
                         )}
@@ -342,9 +369,9 @@ export default function PendingTransactionsPage() {
                     {/* Rejection Modal */}
                     <Modal
                         title={
-                            <div className="flex items-center space-x-2">
-                                <CloseOutlined className="text-red-500" />
-                                <span>Tolak Pembayaran</span>
+                            <div className="flex items-center space-x-3 pb-3 border-b border-gray-200">
+                                <CloseOutlined className="text-red-500 text-xl" />
+                                <span className="text-xl font-semibold text-[#001F54]">Tolak Pembayaran</span>
                             </div>
                         }
                         open={rejectModalVisible}
@@ -353,34 +380,69 @@ export default function PendingTransactionsPage() {
                             rejectForm.resetFields();
                         }}
                         footer={null}
-                        className="rounded-2xl"
+                        className="rounded-xl"
+                        styles={{
+                            header: {
+                                borderBottom: 'none',
+                                paddingBottom: '0',
+                                marginBottom: '0',
+                                paddingLeft: '16px',
+                                paddingRight: '16px'
+                            },
+                            body: {
+                                padding: '0',
+                                paddingLeft: '0',
+                                paddingRight: '0'
+                            }
+                        }}
                     >
                         {selectedPayment && (
-                            <div>
-                                <div className="mb-4">
-                                    <Text strong className="text-[#001F54]">Siswa:</Text>
-                                    <div className="mt-1">
-                                        <div className="font-medium">{selectedPayment.siswa?.nama || 'N/A'}</div>
-                                        <div className="text-sm text-gray-500">{selectedPayment.siswa?.kelas || 'N/A'}</div>
+                            <div className="bg-white">
+                                {/* Student Info */}
+                                <div className="px-4 py-3 border-b border-gray-100">
+                                    <div className="flex items-center space-x-3">
+                                        <div className="w-10 h-10 bg-red-500 rounded-full flex items-center justify-center">
+                                            <UserOutlined className="text-white" />
+                                        </div>
+                                        <div>
+                                            <div className="text-base font-semibold text-[#001F54]">
+                                                {selectedPayment.siswa?.nama || 'N/A'}
+                                            </div>
+                                            <div className="text-sm text-gray-500">
+                                                Kelas {selectedPayment.siswa?.kelas || 'N/A'}
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
 
-                                <Form
-                                    form={rejectForm}
-                                    layout="vertical"
-                                    onFinish={handleRejectSubmit}
-                                >
-                                    <Form.Item
-                                        label="Alasan Penolakan"
-                                        name="reason"
-                                        rules={[{ required: true, message: 'Masukkan alasan penolakan!' }]}
+                                {/* Form */}
+                                <div className="px-4 py-3">
+                                    <Form
+                                        form={rejectForm}
+                                        layout="vertical"
+                                        onFinish={handleRejectSubmit}
                                     >
-                                        <TextArea
-                                            rows={4}
-                                            placeholder="Masukkan alasan mengapa pembayaran ditolak..."
-                                        />
-                                    </Form.Item>
+                                        <Form.Item
+                                            label={
+                                                <div className="flex items-center space-x-1">
+                                                    <span className="font-medium text-[#001F54]">Alasan Penolakan</span>
+                                                    <span className="text-red-500">*</span>
+                                                </div>
+                                            }
+                                            name="reason"
+                                            rules={[{ required: true, message: 'Masukkan alasan penolakan!' }]}
+                                        >
+                                            <TextArea
+                                                rows={3}
+                                                placeholder="Masukkan alasan mengapa pembayaran ditolak..."
+                                                className="rounded-lg"
+                                            />
+                                        </Form.Item>
+                                    </Form>
+                                </div>
 
+                                {/* Action Buttons */}
+                                <div className="px-4 py-3 border-t border-gray-100 bg-gray-50 rounded-b-xl">
                                     <div className="flex justify-end space-x-2">
                                         <Button
                                             onClick={() => {
@@ -395,11 +457,12 @@ export default function PendingTransactionsPage() {
                                             danger
                                             htmlType="submit"
                                             icon={<CloseOutlined />}
+                                            onClick={() => rejectForm.submit()}
                                         >
                                             Tolak Pembayaran
                                         </Button>
                                     </div>
-                                </Form>
+                                </div>
                             </div>
                         )}
                     </Modal>

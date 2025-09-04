@@ -5,7 +5,6 @@ import {
     Card,
     Form,
     Select,
-    Input,
     Button,
     Upload,
     message,
@@ -15,8 +14,6 @@ import {
     Space,
     Divider,
     Tag,
-    Modal,
-    Spin,
     DatePicker,
     Image,
 } from 'antd';
@@ -67,6 +64,18 @@ const fetchStudents = async (kelas?: string) => {
     return result.data;
 };
 
+// API function to fetch approved payments for a student
+const fetchApprovedPayments = async (siswaId: string) => {
+    const response = await fetch(`/api/payments?siswaId=${siswaId}&approvedOnly=true`);
+    const result = await response.json();
+
+    if (!result.success) {
+        throw new Error(result.error || 'Failed to fetch approved payments');
+    }
+
+    return result.data;
+};
+
 const { RangePicker } = DatePicker;
 
 // Monthly fee amount (in IDR)
@@ -90,6 +99,13 @@ interface PaymentFormData {
     receipt: UploadFile[];
 }
 
+interface ApprovedPayment {
+    id: string;
+    startMonth: string;
+    endMonth: string;
+    status: string;
+}
+
 export default function BayarIuranPage() {
     const router = useRouter();
     const [form] = Form.useForm();
@@ -103,6 +119,8 @@ export default function BayarIuranPage() {
     const [studentsError, setStudentsError] = useState<string>('');
     const [previewOpen, setPreviewOpen] = useState(false);
     const [previewImage, setPreviewImage] = useState('');
+    const [approvedPayments, setApprovedPayments] = useState<ApprovedPayment[]>([]);
+    // const [approvedPaymentsLoading, setApprovedPaymentsLoading] = useState(false);
 
     // Fetch students from API based on selected class
     useEffect(() => {
@@ -130,12 +148,55 @@ export default function BayarIuranPage() {
         loadStudents();
     }, [selectedClass]);
 
+    // Fetch approved payments when student is selected
+    useEffect(() => {
+        const loadApprovedPayments = async () => {
+            if (!selectedStudent) {
+                setApprovedPayments([]);
+                return;
+            }
+
+            // setApprovedPaymentsLoading(true);
+
+            try {
+                const payments = await fetchApprovedPayments(selectedStudent);
+                setApprovedPayments(payments);
+            } catch (error) {
+                console.error('Error loading approved payments:', error);
+                setApprovedPayments([]);
+            } finally {
+                // setApprovedPaymentsLoading(false);
+            }
+        };
+
+        loadApprovedPayments();
+    }, [selectedStudent]);
+
     // Calculate total amount
     const totalAmount = selectedMonths.length * MONTHLY_FEE;
+
+    // Get list of paid months from approved payments
+    const getPaidMonths = (): string[] => {
+        const paidMonths: string[] = [];
+
+        approvedPayments.forEach(payment => {
+            const startDate = dayjs(payment.startMonth);
+            const endDate = dayjs(payment.endMonth);
+
+            let current = startDate.clone();
+            while (current.isBefore(endDate, 'month') || current.isSame(endDate, 'month')) {
+                paidMonths.push(current.format('YYYY-MM'));
+                current = current.add(1, 'month');
+            }
+        });
+
+        return paidMonths;
+    };
 
     const handleClassChange = (value: string) => {
         setSelectedClass(value);
         setSelectedStudent('');
+        setApprovedPayments([]);
         form.setFieldsValue({ siswa: undefined });
     };
 
@@ -144,7 +205,7 @@ export default function BayarIuranPage() {
         form.setFieldsValue({ siswa: value });
     };
 
-    const handleMonthChange = (dates: any, dateStrings: string[]) => {
+    const handleMonthChange = (dates: any) => {
         if (dates && dates.length === 2) {
             const startDate = dates[0];
             const endDate = dates[1];
@@ -430,20 +491,57 @@ export default function BayarIuranPage() {
                             >
                                 <RangePicker
                                     picker="month"
-                                    placeholder={['Mulai bulan', 'Sampai bulan']}
+                                    placeholder={
+                                        !selectedClass || !selectedStudent
+                                            ? ['Pilih kelas dan siswa terlebih dahulu', 'Pilih kelas dan siswa terlebih dahulu']
+                                            : ['Mulai bulan', 'Sampai bulan']
+                                    }
                                     size="large"
                                     onChange={handleMonthChange}
+                                    disabled={!selectedClass || !selectedStudent}
                                     disabledDate={(current) => {
+                                        if (!current) return false;
+
                                         // Disable dates outside July 2025 to June 2026
                                         const july2025 = dayjs('2025-07-01');
                                         const june2026 = dayjs('2026-06-30');
-                                        return current && (current.isBefore(july2025, 'month') || current.isAfter(june2026, 'month'));
+                                        if (current.isBefore(july2025, 'month') || current.isAfter(june2026, 'month')) {
+                                            return true;
+                                        }
+
+                                        // Disable months that are already paid (APPROVED status)
+                                        if (selectedStudent) {
+                                            const paidMonths = getPaidMonths();
+                                            const currentMonth = current.format('YYYY-MM');
+                                            return paidMonths.includes(currentMonth);
+                                        }
+
+                                        return false;
                                     }}
                                     format="MMMM YYYY"
                                     style={{ width: '100%' }}
-                                    getPopupContainer={(trigger) => trigger.parentElement || document.body}
+                                    getPopupContainer={() => document.body}
                                 />
                             </Form.Item>
+
+                            {/* Show paid months info */}
+                            {selectedStudent && approvedPayments.length > 0 && (
+                                <Card size="small" className="bg-blue-50 border-blue-200 rounded-2xl">
+                                    <div className="text-center">
+                                        <Text type="secondary" className="text-sm">
+                                            <CheckCircleOutlined className="text-green-500 mr-1" />
+                                            <strong>Bulan yang sudah dibayar:</strong>
+                                        </Text>
+                                        <div className="mt-2">
+                                            {getPaidMonths().map((month, index) => (
+                                                <Tag key={index} color="green" className="mr-1 mb-1">
+                                                    {dayjs(month).format('MMMM YYYY')}
+                                                </Tag>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </Card>
+                            )}
 
                             {/* Amount Display */}
                             {selectedMonths.length > 0 && (

@@ -6,11 +6,8 @@ import {
     Typography,
     Row,
     Col,
-    Tag,
     Button,
-    Space,
     Spin,
-    message,
 } from 'antd';
 import {
     CheckCircleOutlined,
@@ -236,7 +233,7 @@ export default function PaymentStatusPage({ params }: PaymentStatusPageProps) {
                                     <Col span={20}>
                                         <div>
                                             <Text strong className="text-[#001F54]">Nama Siswa</Text>
-                                            <div className="text-lg font-semibold">{paymentData.student.nama}</div>
+                                            <div className="text-base font-semibold">{paymentData.student.nama}</div>
                                         </div>
                                     </Col>
                                 </Row>
@@ -249,7 +246,7 @@ export default function PaymentStatusPage({ params }: PaymentStatusPageProps) {
                                     <Col span={20}>
                                         <div>
                                             <Text strong className="text-[#001F54]">Kelas</Text>
-                                            <div className="text-lg font-semibold">{paymentData.student.kelas}</div>
+                                            <div className="text-base font-semibold">{paymentData.student.kelas}</div>
                                         </div>
                                     </Col>
                                 </Row>
@@ -262,7 +259,7 @@ export default function PaymentStatusPage({ params }: PaymentStatusPageProps) {
                                     <Col span={20}>
                                         <div>
                                             <Text strong className="text-[#001F54]">Periode Pembayaran</Text>
-                                            <div className="text-lg font-semibold">
+                                            <div className="text-base font-semibold">
                                                 {dayjs(paymentData.startMonth).format('MMMM YYYY')} - {dayjs(paymentData.endMonth).format('MMMM YYYY')}
                                             </div>
                                         </div>
@@ -277,13 +274,8 @@ export default function PaymentStatusPage({ params }: PaymentStatusPageProps) {
                                     <Col span={20}>
                                         <div>
                                             <Text strong className="text-[#001F54]">Jumlah Pembayaran</Text>
-                                            <div className="text-2xl font-bold text-[#6B8E23]">
-                                                Rp {paymentData.amount.toLocaleString('id-ID', {
-                                                    style: 'currency',
-                                                    currency: 'IDR',
-                                                    minimumFractionDigits: 0,
-                                                    maximumFractionDigits: 0
-                                                }).replace('IDR', '').trim()}
+                                            <div className="text-base font-bold text-[#6B8E23]">
+                                                Rp {Number(paymentData.amount).toLocaleString('id-ID')}
                                             </div>
                                         </div>
                                     </Col>
@@ -322,7 +314,7 @@ export default function PaymentStatusPage({ params }: PaymentStatusPageProps) {
                         </div> */}
 
                         {/* Action Buttons */}
-                        <div className="mt-6 text-center">
+                        <div className="mt-6 text-center space-y-3">
                             <Button
                                 type="primary"
                                 size="large"
@@ -332,7 +324,8 @@ export default function PaymentStatusPage({ params }: PaymentStatusPageProps) {
                                 style={{
                                     backgroundColor: '#6B8E23',
                                     borderColor: '#6B8E23',
-                                    boxShadow: '0 4px 12px rgba(107, 142, 35, 0.3)'
+                                    boxShadow: '0 4px 12px rgba(107, 142, 35, 0.3)',
+                                    marginBottom: '16px'
                                 }}
                                 onMouseEnter={(e) => {
                                     e.currentTarget.style.backgroundColor = '#5a7a1f';
@@ -351,12 +344,7 @@ Saya ingin melaporkan pembayaran iuran sekolah dengan detail sebagai berikut:
 • Nama Siswa: ${paymentData.student.nama}
 • Kelas: ${paymentData.student.kelas}
 • Periode: ${dayjs(paymentData.startMonth).format('MMMM YYYY')} - ${dayjs(paymentData.endMonth).format('MMMM YYYY')}
-• Jumlah: Rp ${paymentData.amount.toLocaleString('id-ID', {
-                                        style: 'currency',
-                                        currency: 'IDR',
-                                        minimumFractionDigits: 0,
-                                        maximumFractionDigits: 0
-                                    }).replace('IDR', '').trim()}
+• Jumlah: Rp ${Number(paymentData.amount).toLocaleString('id-ID')}
 • Status: ${statusConfig.text}
 • Tanggal Submit: ${dayjs(paymentData.createdAt).format('DD MMMM YYYY HH:mm')}
 
@@ -370,6 +358,18 @@ Terima kasih.`;
                             >
                                 Send WhatsApp
                             </Button>
+
+                            <Link href="/">
+                                <Button
+                                    type="default"
+                                    size="large"
+                                    block
+                                    icon={<ArrowLeftOutlined />}
+                                    className="h-12 text-base font-medium rounded-full border-[#6B8E23] text-[#6B8E23] hover:bg-[#6B8E23] hover:text-white"
+                                >
+                                    Kembali
+                                </Button>
+                            </Link>
                         </div>
                     </Card>
                 </div>

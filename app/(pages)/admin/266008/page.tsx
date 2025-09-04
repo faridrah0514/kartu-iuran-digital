@@ -9,6 +9,8 @@ import {
 import {
     TeamOutlined,
     ArrowLeftOutlined,
+    IdcardOutlined,
+    HistoryOutlined,
 } from '@ant-design/icons';
 import { ConfigProvider } from 'antd';
 import locale from 'antd/locale/id_ID';
@@ -74,6 +76,58 @@ export default function AdminPage() {
                                 onClick={() => router.push('/admin/266008/pending')}
                             >
                                 Pending Transaction
+                            </Button>
+                        </div>
+                        {/* Payment History Button */}
+                        <div className="mb-4">
+                            <Button
+                                type="primary"
+                                size="large"
+                                block
+                                icon={<HistoryOutlined />}
+                                className="h-12 text-base font-medium rounded-full"
+                                style={{
+                                    backgroundColor: '#6B8E23',
+                                    borderColor: '#6B8E23',
+                                    boxShadow: '0 4px 12px rgba(107, 142, 35, 0.3)'
+                                }}
+                                onMouseEnter={(e) => {
+                                    e.currentTarget.style.backgroundColor = '#5a7a1f';
+                                    e.currentTarget.style.borderColor = '#5a7a1f';
+                                }}
+                                onMouseLeave={(e) => {
+                                    e.currentTarget.style.backgroundColor = '#6B8E23';
+                                    e.currentTarget.style.borderColor = '#6B8E23';
+                                }}
+                                onClick={() => router.push('/admin/266008/payment-history')}
+                            >
+                                Riwayat Pembayaran
+                            </Button>
+                        </div>
+                        {/* Lihat Kartu Iuran Button */}
+                        <div className="mb-4">
+                            <Button
+                                type="primary"
+                                size="large"
+                                block
+                                icon={<IdcardOutlined />}
+                                className="h-12 text-base font-medium rounded-full"
+                                style={{
+                                    backgroundColor: '#6B8E23',
+                                    borderColor: '#6B8E23',
+                                    boxShadow: '0 4px 12px rgba(107, 142, 35, 0.3)'
+                                }}
+                                onMouseEnter={(e) => {
+                                    e.currentTarget.style.backgroundColor = '#5a7a1f';
+                                    e.currentTarget.style.borderColor = '#5a7a1f';
+                                }}
+                                onMouseLeave={(e) => {
+                                    e.currentTarget.style.backgroundColor = '#6B8E23';
+                                    e.currentTarget.style.borderColor = '#6B8E23';
+                                }}
+                                onClick={() => router.push('/admin/266008/kartu-iuran')}
+                            >
+                                Lihat Kartu Iuran
                             </Button>
                         </div>
 

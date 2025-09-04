@@ -3,6 +3,8 @@ import { prisma } from '@/lib/prisma';
 import { savePaymentFile } from '@/lib/fileUpload';
 import dayjs from 'dayjs';
 
+export const dynamic = 'force-dynamic';
+
 const MONTHLY_FEE = 30000; // IDR
 
 export async function POST(request: NextRequest) {
@@ -117,15 +119,17 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
     try {
-        const { searchParams } = new URL(request.url);
+        const { searchParams } = request.nextUrl;
         const siswaId = searchParams.get('siswaId');
         const status = searchParams.get('status');
         const page = parseInt(searchParams.get('page') || '1');
         const limit = parseInt(searchParams.get('limit') || '10');
+        const approvedOnly = searchParams.get('approvedOnly') === 'true';
 
         const where: any = {};
         if (siswaId) where.siswaId = siswaId;
         if (status) where.status = status;
+        if (approvedOnly) where.status = 'APPROVED';
 
         const [pembayaran, total] = await Promise.all([
             prisma.pembayaran.findMany({
