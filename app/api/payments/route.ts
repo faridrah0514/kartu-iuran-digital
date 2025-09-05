@@ -28,6 +28,24 @@ export async function POST(request: NextRequest) {
             );
         }
 
+        // Validate file size (max 5MB)
+        const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB in bytes
+        if (file.size > MAX_FILE_SIZE) {
+            return NextResponse.json(
+                { success: false, error: 'Ukuran file terlalu besar. Maksimal 5MB' },
+                { status: 400 }
+            );
+        }
+
+        // Validate file type (only images)
+        const allowedImageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+        if (!allowedImageTypes.includes(file.type)) {
+            return NextResponse.json(
+                { success: false, error: 'Tipe file tidak didukung. Hanya file gambar (JPG, PNG, GIF, WebP) yang diperbolehkan' },
+                { status: 400 }
+            );
+        }
+
         // Validate student exists
         const siswa = await prisma.siswa.findUnique({
             where: { id: siswaId }
