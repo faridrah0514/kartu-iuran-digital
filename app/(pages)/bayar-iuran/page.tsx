@@ -239,19 +239,29 @@ export default function BayarIuranPage() {
             const isImage = file.type.startsWith('image/');
             if (!isImage) {
                 message.error('Hanya file gambar yang diperbolehkan!');
-                return false;
+                return Upload.LIST_IGNORE; // This prevents the file from being added to the file list
             }
 
             const isLt5M = file.size / 1024 / 1024 < 5;
             if (!isLt5M) {
                 message.error('Ukuran gambar harus kurang dari 5MB!');
-                return false;
+                return Upload.LIST_IGNORE; // This prevents the file from being added to the file list
             }
 
             return false; // Prevent auto upload
         },
         onChange: (info) => {
-            setFileList(info.fileList);
+            // Filter out any files that might have passed through (extra safety)
+            const validFiles = info.fileList.filter(file => {
+                if (!file.originFileObj) return true; // Keep existing files
+
+                const isImage = file.originFileObj.type.startsWith('image/');
+                const isLt5M = file.originFileObj.size / 1024 / 1024 < 5;
+
+                return isImage && isLt5M;
+            });
+
+            setFileList(validFiles);
         },
         fileList,
         maxCount: 1,
