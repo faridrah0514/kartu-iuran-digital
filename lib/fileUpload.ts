@@ -1,7 +1,7 @@
 import { writeFile, mkdir } from 'fs/promises';
 import { join } from 'path';
 
-const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
 export interface FileUploadResult {
@@ -15,7 +15,7 @@ export function validateFile(file: File): { valid: boolean; error?: string } {
     if (!ALLOWED_MIME_TYPES.includes(file.type)) {
         return {
             valid: false,
-            error: 'Hanya file gambar yang diperbolehkan (JPG, PNG, WebP)'
+            error: 'Hanya file gambar yang diperbolehkan (JPG, PNG, GIF, WebP)'
         };
     }
 
