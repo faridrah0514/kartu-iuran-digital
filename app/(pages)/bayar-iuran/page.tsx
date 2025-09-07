@@ -535,7 +535,7 @@ export default function BayarIuranPage() {
                             </Form.Item>
 
                             {/* Show paid months info */}
-                            {selectedStudent && approvedPayments.length > 0 && (
+                            {/* {selectedStudent && approvedPayments.length > 0 && (
                                 <Card size="small" className="bg-blue-50 border-blue-200 rounded-2xl">
                                     <div className="text-center">
                                         <Text type="secondary" className="text-sm">
@@ -551,7 +551,7 @@ export default function BayarIuranPage() {
                                         </div>
                                     </div>
                                 </Card>
-                            )}
+                            )} */}
 
                             {/* Amount Display */}
                             {selectedMonths.length > 0 && (
