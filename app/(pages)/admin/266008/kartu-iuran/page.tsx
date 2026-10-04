@@ -58,6 +58,13 @@ interface StudentPayment {
     paidMonths: string[];
 }
 
+const ACADEMIC_YEAR_MONTHS = Array.from({ length: 12 }, (_, i) => {
+    const date = new Date(2026, 6 + i, 1); // July 2026 – June 2027
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    return `${year}-${month}`;
+});
+
 
 export default function KartuIuranIndexPage() {
     const router = useRouter();
@@ -152,15 +159,15 @@ export default function KartuIuranIndexPage() {
         }
     };
 
-    const getPaymentProgress = () => {
-        if (!selectedStudentPayment) return 0;
-        const totalMonths = 12; // July 2025 to June 2026
-        const paidMonths = selectedStudentPayment.paidMonths.length;
-        return Math.round((paidMonths / totalMonths) * 100);
+    const getPaidMonthsCount = () => {
+        return selectedStudentPayment?.paidMonths.filter((month) =>
+            ACADEMIC_YEAR_MONTHS.includes(month)
+        ).length || 0;
     };
 
-    const getPaidMonthsCount = () => {
-        return selectedStudentPayment?.paidMonths.length || 0;
+    const getPaymentProgress = () => {
+        if (!selectedStudentPayment) return 0;
+        return Math.round((getPaidMonthsCount() / ACADEMIC_YEAR_MONTHS.length) * 100);
     };
 
     const getTotalPaidAmount = () => {

@@ -42,11 +42,11 @@ const INDONESIAN_MONTHS = [
     'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
 ];
 
-// Generate all months from July 2025 to June 2026
+// Generate all months from July 2026 to June 2027
 const generateAllMonths = () => {
     const months = [];
-    let current = dayjs('2025-07-01');
-    const end = dayjs('2026-06-30');
+    let current = dayjs('2026-07-01');
+    const end = dayjs('2027-06-30');
 
     while (current.isSameOrBefore(end, 'month')) {
         months.push({
@@ -126,7 +126,8 @@ export default function KartuIuranPage() {
     };
 
     const getPaidMonthsCount = () => {
-        return studentPayment?.paidMonths.length || 0;
+        const academicYearMonths = new Set(allMonths.map((month) => month.key));
+        return studentPayment?.paidMonths.filter((month) => academicYearMonths.has(month)).length || 0;
     };
 
     const getTotalMonths = () => {

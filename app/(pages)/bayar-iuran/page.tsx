@@ -512,10 +512,10 @@ export default function BayarIuranPage() {
                                     disabledDate={(current) => {
                                         if (!current) return false;
 
-                                        // Disable dates outside July 2025 to June 2026
-                                        const july2025 = dayjs('2026-07-01');
-                                        const june2026 = dayjs('2027-06-30');
-                                        if (current.isBefore(july2025, 'month') || current.isAfter(june2026, 'month')) {
+                                        // Disable dates outside July 2026 to June 2027
+                                        const july2026 = dayjs('2026-07-01');
+                                        const june2027 = dayjs('2027-06-30');
+                                        if (current.isBefore(july2026, 'month') || current.isAfter(june2027, 'month')) {
                                             return true;
                                         }
 
